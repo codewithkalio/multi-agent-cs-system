@@ -1,13 +1,13 @@
-# multi-agent-cs-system
+# Multi-Agent Customer Support System with MCP & A2A
 
 
 
-## Goal
+## 🎯 Goal
 Build my own multi-agent system using ADK 
 
 
 
-## What exists
+## 📦 What exists
 
 - Supabase “phase 1” for a customer support demo:
   - `customers`, `orders`, `support_tickets` tables
@@ -17,7 +17,7 @@ Build my own multi-agent system using ADK
   - Uses an MCP Supabase toolset to answer billing/order questions
   - Routes requests to a billing specialist agent
 
-## What will be built next
+## 🛠️ What will be built next
 
 - Returns/refunds flow:
   - New ADK specialists
