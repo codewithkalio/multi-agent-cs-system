@@ -3,7 +3,7 @@
 
 
 ## 🎯 Goal
-Build my own multi-agent system using ADK 
+Build my own multi-agent system using ADK to explore the added complexity, risk and necessary guardrails that come with agent autonomy.
 
 
 
