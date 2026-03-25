@@ -4,6 +4,7 @@ from google.adk.agents.llm_agent import Agent
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
+from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
 
 load_dotenv()
 
@@ -43,15 +44,21 @@ escalation_agent = Agent(
     and ask them to confirm their email address so the team can reach them.""",
 )
 
+returns_agent = RemoteA2aAgent(
+    name='returns_agent',
+    description='Handles product returns and return eligibility checks.',
+    agent_card='http://localhost:8001/.well-known/agent-card.json',
+)
+
 root_agent = Agent(
     model='gemini-2.5-flash',
     name='root_agent',
     description='Routes customer support requests to the right specialist.',
-    instruction="""You are a customer support router. You must ALWAYS delegate to the appropriate sub-agent. Never answer questions yourself.
+    instruction="""You are a customer support router. You must ALWAYS delegate to the appropriate sub-agent. Never answer directly.
 
 - Billing, orders, payments, order status → delegate to billing_agent
-- Returns or refunds → let the user know that service is coming soon
-- Complaints, unresolved issues, or requests for a human → delegate to escalation_agent
+- Returns or refunds → delegate to returns_agent
+- Complaints, unresolved issues, requests for a human → delegate to escalation_agent
 """,
-    sub_agents=[billing_agent, escalation_agent],
+    sub_agents=[billing_agent, escalation_agent, returns_agent],
 )
