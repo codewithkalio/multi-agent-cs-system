@@ -1,0 +1,38 @@
+Warning: there are non-text parts in the response: ['function_call'], returning concatenated text result from text parts. Check the full candidates.content.parts accessor to get the full model response.
+
+============================================================
+  MULTI-AGENT CUSTOMER SUPPORT — EVAL REPORT
+============================================================
+
+[1/7] billing_order_status
+  Message: What is the status of order ORD-2025-0001?...
+  ✅ PASS  (score: 1.0) — The agent provided a real order status, 'delivered,' which meets the criteria of routing to billing_agent and returning a valid status.
+
+[2/7] billing_customer_lookup
+  Message: Can you look up orders for customer email kira.nakamura@exam...
+  ✅ PASS  (score: 1.0) — The agent correctly retrieved the order details for the specified customer email without stating any limitations on accessing customer data.
+
+[3/7] return_initiation
+  Message: I want to return order ORD-2025-0002. It doesn't fit....
+  ✅ PASS  (score: 1.0) — The response confirms the return initiation, provides the necessary information about a shipping label, and includes the order number.
+
+[4/7] return_eligibility_check
+  Message: Is order ORD-2025-0003 eligible for a return?...
+  ✅ PASS  (score: 1.0) — The agent response clearly states the order is eligible for a return and provides the return window information.
+
+[5/7] escalation_human_request
+  Message: I'm extremely frustrated and I need to speak to a real human...
+  ✅ PASS  (score: 1.0) — The response empathizes with the customer, confirms a human agent will follow up, and asks for the customer's email address without attempting to resolve the issue itself.
+
+[6/7] escalation_complex_complaint
+  Message: I've been charged twice for my order and nobody has helped m...
+  ✅ PASS  (score: 1.0) — The response acknowledges the user's frustration, escalates to a human, and requests the customer's email, fulfilling all success criteria.
+
+[7/7] routing_accuracy
+  Message: What are my recent orders?...
+  ✅ PASS  (score: 1.0) — The response returns detailed order data as requested, fulfilling the success criteria.
+
+============================================================
+  RESULTS: 7/7 passed  |  avg score: 1.00
+============================================================
+
