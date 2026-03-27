@@ -10,7 +10,7 @@ A multi-agent AI customer support system built with Google ADK. Routes customer 
 - [Setup](#-setup)
 - [Running the System](#-running-the-system)
 - [Manual Test Scenarios](#-manual-test-scenarios)
-- [Running Automated Evaluations (`eval.py`)](#-running-automated-evaluations-evalpy)
+- [Running Automated Evaluations](#-running-automated-evaluations-evalpy)
 - [Project Structure](#-project-structure)
 
 ## 🏗️ Architecture
@@ -140,7 +140,7 @@ The root agent routes to `returns_agent` over HTTP via the A2A protocol. The r
 
 The root agent routes to `escalation_agent`, which sympathizes with the customer and collects their email for follow-up.
 
-## 🧾 Running Automated Evaluations (`eval.py`)
+## 🧾 Running Automated Evaluations
 
 `eval.py` runs an automated evaluation pass against the multi-agent system using predefined test cases.
 
@@ -154,7 +154,7 @@ For each test case, it:
 ### Requirements for eval
 
 - Returns agent running in a separate terminal (`python returns_agent.py`)
-- `OPENAI_API_KEY` set in your environment (used by the LLM judge)
+- `OPENAI_API_KEY` set in your environment (OpenAI is used to test the Gemini agents)
 - Same virtual environment activated
 
 ### Run eval and save output to a file
