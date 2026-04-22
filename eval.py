@@ -2,6 +2,9 @@
 eval.py — Automated evaluation for the multi-agent customer support system.
 
 Uses LLM-as-judge to score agent responses against expected behavior.
+Traces every eval run in LangFuse: agent calls, LLM judge generations,
+and per-test-case scores are all visible in the LangFuse dashboard.
+
 Add new test cases by appending to the TEST_CASES list.
 
 Usage:
@@ -24,10 +27,22 @@ from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
-from openai import OpenAI
+
+# LangFuse 4.x imports
+# observe: decorator that wraps any function as a LangFuse span/trace
+# get_client: returns the global LangFuse client for scoring and flushing
+from langfuse import observe, get_client
+
+# Drop-in OpenAI replacement: every call is captured as a LangFuse Generation automatically
+from langfuse.openai import OpenAI
 
 warnings.filterwarnings("ignore")
 load_dotenv()
+
+# The LangFuse client reads LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY,
+# and LANGFUSE_HOST from environment variables automatically.
+_langfuse = get_client()
+
 
 # ---------------------------------------------------------------------------
 # Test cases — add new dicts here to scale the eval
@@ -102,8 +117,11 @@ TEST_CASES = [
 
 # ---------------------------------------------------------------------------
 # Agent runner
+# as_type="agent" tags this span as an agent call in the LangFuse UI.
+# Input (message) and output (response) are captured automatically.
 # ---------------------------------------------------------------------------
 
+@observe(name="agent_run", as_type="agent")
 async def run_agent(agent, message: str, session_service, app_name: str) -> str:
     """Run an ADK agent and return the final response."""
     runner = Runner(agent=agent, app_name=app_name, session_service=session_service)
@@ -118,13 +136,18 @@ async def run_agent(agent, message: str, session_service, app_name: str) -> str:
     ):
         if event.is_final_response() and event.content and event.content.parts:
             response = event.content.parts[0].text
+
     return response
 
 
 # ---------------------------------------------------------------------------
-# LLM judge - Use OpenAI to judge the Google Agents
+# LLM judge
+# as_type="evaluator" tags this span correctly in LangFuse.
+# The OpenAI call inside is captured automatically as a nested Generation
+# because we imported OpenAI from langfuse.openai (drop-in wrapper).
 # ---------------------------------------------------------------------------
 
+@observe(name="llm_judge", as_type="evaluator")
 def judge_response(test_case: dict, agent_response: str) -> dict:
     """Use OpenAI to judge whether the agent response meets the criteria."""
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -152,6 +175,46 @@ Respond ONLY with a valid JSON object in this exact format:
         response_format={"type": "json_object"},
     )
     return json.loads(result.choices[0].message.content)
+
+
+# ---------------------------------------------------------------------------
+# Per-test-case runner
+# Each call becomes one root Trace in LangFuse containing:
+#   - agent_run span (the ADK multi-agent call)
+#   - llm_judge span with a nested Generation (the OpenAI judge call)
+#   - a numeric score attached to the trace
+# ---------------------------------------------------------------------------
+
+@observe(name="eval_test_case")
+async def run_test_case(test_case: dict, agent, session_service) -> tuple[str, dict]:
+    """Run one test case, judge it, and attach the score to the LangFuse trace."""
+    _langfuse.update_current_span(
+        metadata={
+            "test_id": test_case["id"],
+            "description": test_case["description"],
+            "criteria": test_case["criteria"],
+        }
+    )
+
+    response = await run_agent(
+        agent,
+        test_case["message"],
+        session_service,
+        app_name=f"eval_{test_case['id']}",
+    )
+
+    judgment = judge_response(test_case, response)
+
+    # Attach the numeric score to this trace — visible in the LangFuse dashboard
+    # alongside the full conversation, token counts, and latency
+    _langfuse.score_current_trace(
+        name="eval_score",
+        value=judgment["score"],
+        data_type="NUMERIC",
+        comment=judgment["reason"],
+    )
+
+    return response, judgment
 
 
 # ---------------------------------------------------------------------------
@@ -187,13 +250,11 @@ async def run_eval():
         print(f"  Message: {test_case['message'][:60]}...")
 
         try:
-            response = await run_agent(
+            response, judgment = await run_test_case(
+                test_case,
                 root_agent,
-                test_case["message"],
                 session_service,
-                app_name=f"eval_{test_case['id']}",
             )
-            judgment = judge_response(test_case, response)
 
             result = EvalResult(
                 test_id=test_case["id"],
@@ -236,6 +297,12 @@ async def run_eval():
             print(f"  Response: {r.agent_response[:200]}...")
 
     print()
+
+    # Flush all buffered LangFuse events before the process exits.
+    # LangFuse batches events for efficiency — without this call, the last
+    # traces in a short-lived script may not be sent.
+    _langfuse.flush()
+
     return passed == total
 
 
