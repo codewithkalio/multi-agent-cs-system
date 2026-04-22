@@ -26,7 +26,7 @@ supabase_mcp = MCPToolset(
 )
 
 billing_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-2.5-flash-lite',
     name='billing_agent',
     description='Handles customer billing and order questions.',
     instruction="""You help customers with billing and order questions.
@@ -36,7 +36,7 @@ ALWAYS query the database to answer questions. Never say you don't have access t
 )
 
 escalation_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-2.5-flash-lite',
     name='escalation_agent',
     description='Handles complex issues that need human intervention.',
     instruction="""You handle escalations when other agents cannot resolve a customer's issue.
@@ -51,7 +51,7 @@ returns_agent = RemoteA2aAgent(
 )
 
 root_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-2.5-flash-lite',
     name='root_agent',
     description='Routes customer support requests to the right specialist.',
     instruction="""You are a customer support router. You must ALWAYS delegate to the appropriate sub-agent. Never answer directly.

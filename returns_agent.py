@@ -25,7 +25,7 @@ def initiate_return(order_id: str, reason: str) -> dict:
     }
 
 returns_agent = Agent(
-    model='gemini-2.5-flash',
+    model='gemini-2.5-flash-lite',
     name='returns_agent',
     description='Handles product returns and return eligibility checks.',
     instruction="""You are a returns specialist.
